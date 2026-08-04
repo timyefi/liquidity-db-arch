@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>liquidity-db 技术架构手册 · 资金面数据库</title>
+<meta name="description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
+<meta property="og:title" content="liquidity-db 资金面数据库 技术架构手册 | 投研AI家园">
+<meta property="og:description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
+<meta property="og:image" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/cover.png">
+<meta property="og:url" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="投研AI家园">
+<meta itemprop="name" content="liquidity-db 资金面数据库 技术架构手册 | 投研AI家园">
+<meta itemprop="description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
+<meta itemprop="image" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/cover.png">
+
 <meta name="description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级,DM 100%覆盖34视角)→L2知识层(34视角分析逻辑/9维度阈值框架/EDB M码/data_pool报表文档)→L3计算层(9大公式+综合评分卡+拐点信号)→L4输出层(10板块HTML周报/图表/点评)。含接口契约、独立调用示例、4种集成模式、潜在应用思路。作者：叶青">
 <meta property="og:title" content="liquidity-db 资金面数据库 技术架构手册 | 投研AI家园">
 <meta property="og:description" content="资金面数据库五层解耦架构：L0数据源→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑)→L3计算层(9大公式+评分卡)→L4输出层(10板块HTML周报)。作者：叶青">
@@ -278,19 +289,44 @@ footer.rpt .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1
 footer.rpt a{color:var(--c-gold);text-decoration:none;border-bottom:1px solid transparent}
 footer.rpt a:hover{border-bottom-color:var(--c-gold)}
 
-/* ---------- 响应式 ---------- */
+/* ---------- 响应式（移动端自适应规范 · fioutput Navy） ----------
+   铁律：≤899px 禁止页面级横向滚动（scrollWidth ≤ innerWidth）
+   表格内部可横向滚动兜底，绝不撑破页面 */
 @media (max-width:899px){
   .wrap{padding:0 22px}
   nav.toc .wrap{padding:0 22px}
-  header.blueprint h1{font-size:34px}
-  header.blueprint h1 .thin{font-size:19px}
-  .modgrid{grid-template-columns:1fr}
+  nav.toc a{padding:14px 12px;font-size:12.5px}
+  header.blueprint .wrap{padding-top:44px;padding-bottom:40px}
+  header.blueprint h1{font-size:32px}
+  header.blueprint h1 .thin{font-size:18px}
+  .doc-sub{font-size:15px}
+  .doc-meta span{margin-right:14px;padding-right:14px}
+  section{padding:44px 0 6px}
+  h2{font-size:25px}
+  h3{font-size:18px}
+  .stat{min-width:45%;padding:20px 16px}
+  .stat .num{font-size:30px}
+  /* 网格：!important 压过内联 style 写死的列数 */
+  .modgrid{grid-template-columns:1fr!important}
   .layer{flex-wrap:wrap}
   .layer .tag{flex:1 1 100%;flex-direction:row;gap:12px;padding:10px 16px}
   .layer .solo{flex:1 1 100%;border-left:none;border-top:1px dashed var(--c-line);padding:8px}
-  .stat .num{font-size:30px}
-  #dag{height:480px}
-  .doc-meta span{margin-right:14px;padding-right:14px}
+  /* 表格：块级化 + 内部横向滚动兜底 + 压缩字号 */
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;font-size:12.5px}
+  th{font-size:10.5px;padding:8px 10px}
+  td{padding:8px 10px}
+  td code,th code{word-break:break-all;white-space:normal}
+  /* 降级链：纵向排列，箭头旋转 90° */
+  .chain{flex-direction:column}
+  .cnode{min-width:0}
+  .carrow{flex:0 0 30px;transform:rotate(90deg)}
+  /* 代码块 / 公式 / Tab / 折叠面板 */
+  .codeblock pre{font-size:12px}
+  .formula{font-size:12px}
+  .tabbar button{padding:12px 16px;font-size:13px}
+  .tabpanel{padding:20px 16px 8px}
+  details summary{font-size:14px;padding:12px 14px}
+  #dag{height:420px}
 }
 </style>
 </head>
