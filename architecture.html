@@ -4,6 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>liquidity-db 技术架构手册 · 资金面数据库</title>
+<meta name="description" content="liquidity-db 技术架构手册 · 资金面数据库">
+<meta property="og:title" content="liquidity-db 技术架构手册 · 资金面数据库 | 投研AI家园">
+<meta property="og:description" content="liquidity-db 技术架构手册 · 资金面数据库">
+<meta property="og:image" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/cover.png">
+<meta property="og:url" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="投研AI家园">
+<meta itemprop="name" content="liquidity-db 技术架构手册 · 资金面数据库 | 投研AI家园">
+<meta itemprop="description" content="liquidity-db 技术架构手册 · 资金面数据库">
+<meta itemprop="image" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/cover.png">
+
+<meta name="description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
+<meta property="og:title" content="liquidity-db 资金面数据库 技术架构手册 | 投研AI家园">
+<meta property="og:description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
+<meta property="og:image" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/cover.png">
+<meta property="og:url" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="投研AI家园">
+<meta itemprop="name" content="liquidity-db 资金面数据库 技术架构手册 | 投研AI家园">
+<meta itemprop="description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
+<meta itemprop="image" content="https://kmrhoavgygtv.sealosbja.site/pages/tutorial-liquidity-db-architecture/cover.png">
+
 <meta name="description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
 <meta property="og:title" content="liquidity-db 资金面数据库 技术架构手册 | 投研AI家园">
 <meta property="og:description" content="资金面数据库五层解耦架构：L0数据源(DM/Wind/iFinD/AKShare 5路)→L1取数层(4引擎自动降级)→L2知识层(34视角分析逻辑/9维度阈值框架)→L3计算层(9大公式+综合评分卡)→L4输出层(10板块HTML周报)。含接口契约、独立调用示例、4种集成模式。作者：叶青">
@@ -200,7 +222,13 @@ strong{color:var(--c-ink)}
 .contract .cv{color:var(--c-body);word-break:break-all}
 
 /* ---------- 表格 ---------- */
-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+/* 表格滚动容器：宽表在容器内横向滚动，不撑破页面（移动端关键）
+   注意：必须隐藏滚动条——否则滚动条占据 15px 内容宽度，
+   导致 width:100% 的表格被压缩（316px 容器 → 301px 表格，视觉上缩在左侧） */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:20px 0;scrollbar-width:none}
+.table-scroll::-webkit-scrollbar{display:none}
+table{width:100%;border-collapse:collapse;font-size:14px}
+.table-scroll table{margin:0}
 th{
   text-align:left;background:transparent;color:var(--c-primary);font-size:12px;letter-spacing:.12em;
   text-transform:uppercase;border-bottom:2px solid var(--c-primary);padding:10px 12px;font-weight:bold;
@@ -308,11 +336,16 @@ footer.rpt a:hover{border-bottom-color:var(--c-gold)}
   .stat .num{font-size:30px}
   /* 网格：!important 压过内联 style 写死的列数 */
   .modgrid{grid-template-columns:1fr!important}
+  /* grid item 默认 min-width:auto 会被内容撑宽轨道，必须归零 */
+  .modcard{min-width:0}
+  .modcard .mname{overflow-wrap:anywhere}
+  .modcard .mdesc{overflow-wrap:anywhere}
+  .contract .cv{overflow-wrap:anywhere}
   .layer{flex-wrap:wrap}
   .layer .tag{flex:1 1 100%;flex-direction:row;gap:12px;padding:10px 16px}
   .layer .solo{flex:1 1 100%;border-left:none;border-top:1px dashed var(--c-line);padding:8px}
-  /* 表格：块级化 + 内部横向滚动兜底 + 压缩字号 */
-  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;font-size:12.5px}
+  /* 表格：由 JS 包裹进 .table-scroll 滚动容器，保持 display:table 列布局 */
+  .table-scroll table{font-size:12.5px}
   th{font-size:10.5px;padding:8px 10px}
   td{padding:8px 10px}
   td code,th code{word-break:break-all;white-space:normal}
@@ -1151,6 +1184,15 @@ dagChart.setOption({
   }]
 });
 addEventListener('resize', () => dagChart.resize());
+
+/* ---------- 表格滚动容器（移动端自适应） ---------- */
+document.querySelectorAll('table').forEach(t => {
+  if (t.parentElement.classList.contains('table-scroll')) return;
+  const w = document.createElement('div');
+  w.className = 'table-scroll';
+  t.parentNode.insertBefore(w, t);
+  w.appendChild(t);
+});
 </script>
 </body>
 </html>
